@@ -45,7 +45,7 @@ def three_path_sampler(g, g_filtered, k):
     edges = np.array(g.edges)
     #for _ in range(k):
     #    three_paths.append(sample.sample(g_filtered, edges))
-    three_paths.append(sample.sample(g_filtered, edges, k))
+    three_paths = sample.sample(g_filtered, edges, k)
     print("Got three-paths")
     for three_path in three_paths:
         index = determine_induced_subgraph(three_path, g)
