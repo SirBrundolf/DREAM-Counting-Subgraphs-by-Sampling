@@ -10,6 +10,7 @@
 
 
 import numpy as np
+import random
 
 
 w = 0
@@ -24,16 +25,20 @@ def init_sample(g):
     calculate_w(g)
 
 
-def sample(g):
-    u, v = pick_random_edge(g)
-    neighbors_of_u_except_v = list(set(g[u]).difference({v}))
-    neighbors_of_v_except_u = list(set(g[v]).difference({u}))
-    u_ = neighbors_of_u_except_v[np.random.randint(len(neighbors_of_u_except_v))]
-    v_ = neighbors_of_v_except_u[np.random.randint(len(neighbors_of_v_except_u))]
-    if u_ == v_:
-        return sample(g)
-    else:
-        return [(u_, u), (u, v), (v, v_)]
+def sample(g, edges, k):
+    edges_picked = random.choices(edges, weights=tau_list, k=k)
+    samples = []
+    for e in edges_picked:
+        u, v = e[0], e[1]
+        neighbors_of_u_except_v = list(set(g[u]).difference({v}))
+        neighbors_of_v_except_u = list(set(g[v]).difference({u}))
+        u_ = neighbors_of_u_except_v[np.random.randint(len(neighbors_of_u_except_v))]
+        v_ = neighbors_of_v_except_u[np.random.randint(len(neighbors_of_v_except_u))]
+        if u_ == v_:
+            edges_picked.append(random.choices(edges, weights=tau_list, k=k)[0])
+        else:
+            samples.append([(u_, u), (u, v), (v, v_)])
+    return samples
 
 
 def calculate_w(g):
@@ -45,8 +50,3 @@ def calculate_w(g):
         tau_list = np.append(tau_list, tau_e)
         w += tau_e
     tau_list = tau_list / w
-
-
-def pick_random_edge(g):
-    e = np.random.default_rng().choice(g.edges, 1, p=tau_list)
-    return e[0][0], e[0][1]

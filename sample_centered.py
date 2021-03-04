@@ -11,6 +11,7 @@
 
 
 import numpy as np
+import random
 
 
 big_lambda = 0
@@ -25,22 +26,29 @@ def init_sample_centered(g):
     calculate_big_lambda(g)
 
 
-def sample_centered(g):
-    u, v = pick_random_edge(g)
-    neighbors_of_u_bigger_than_v = [neighbor for neighbor in g[u] if g.degree(v) < g.degree(neighbor)
-                                    or (g.degree(v) == g.degree(neighbor) and v < neighbor)]
-    neighbors_of_v_bigger_than_u = [neighbor for neighbor in g[v] if g.degree(u) < g.degree(neighbor)
-                                    or (g.degree(u) == g.degree(neighbor) and u < neighbor)]
-    if len(neighbors_of_u_bigger_than_v) == 0 or len(neighbors_of_v_bigger_than_u) == 0:
-        return sample_centered(g)
-    else:
+def sample_centered(g, edges, k):
+    edges_picked = random.choices(edges, weights=lambda_list, k=k)
+    samples = []
+    for e in edges_picked:
+        u, v = e[0], e[1]
+        degree_u = g.degree(u)
+        degree_v = g.degree(v)
+        neighbors_of_u_bigger_than_v = [neighbor for neighbor in g[u] if degree_v < g.degree(neighbor)
+                                        or (degree_v == g.degree(neighbor) and v < neighbor)]
+        neighbors_of_v_bigger_than_u = [neighbor for neighbor in g[v] if degree_u < g.degree(neighbor)
+                                        or (degree_u == g.degree(neighbor) and u < neighbor)]
+        if len(neighbors_of_u_bigger_than_v) == 0 or len(neighbors_of_v_bigger_than_u) == 0:
+            edges_picked.append(random.choices(edges, weights=lambda_list, k=1)[0])
+            continue
         u_ = neighbors_of_u_bigger_than_v[np.random.randint(len(neighbors_of_u_bigger_than_v))]
         v_ = neighbors_of_v_bigger_than_u[np.random.randint(len(neighbors_of_v_bigger_than_u))]
         centered_three_path = [(u_, u), (u, v), (v, v_)]
         if centered_three_path is not None:
-            return centered_three_path
+            samples.append(centered_three_path)
         else:
-            return sample_centered(g)
+            edges_picked.append(random.choices(edges, weights=lambda_list, k=1)[0])
+    return samples
+
 
 def calculate_big_lambda(g):
     global big_lambda
@@ -53,8 +61,3 @@ def calculate_big_lambda(g):
         lambda_list = np.append(lambda_list, lambda_e)
         big_lambda += lambda_e
     lambda_list = lambda_list / big_lambda
-
-
-def pick_random_edge(g):
-    e = np.random.default_rng().choice(g.edges, 1, p=lambda_list)
-    return e[0][0], e[0][1]

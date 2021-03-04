@@ -41,19 +41,15 @@ def three_path_sampler(g, g_filtered, k):
     global c
 
     w = sample.w
-    three_paths = []
-    for _ in range(k):
-        three_paths.append(sample.sample(g_filtered))
+    edges = list(g.edges)
+    three_paths = sample.sample(g_filtered, edges, k)
     print("Got three-paths")
-    for three_path in three_paths:
-        index = determine_induced_subgraph(three_path, g)
-        if index != -1:
-            count[index] += 1
+    determine_induced_subgraph(three_paths, g)
     print("Determining induced subgraphs done")
     for i in range(1, 6):
         c[i] = (count[i] / k) * (w / a[i])
     print("C1-5's calculated")
-    n1 = sum([sp.comb(g.degree(v), 3) for v in g.nodes])  #Might be wrong
+    n1 = sum([sp.comb(g.degree(v), 3) for v in g.nodes])
     print("N1 calculated")
     c[0] = n1 - (c[2] + 2 * c[4] + 4 * c[5])
     print("C0 calculated")
@@ -64,15 +60,16 @@ def three_path_sampler(g, g_filtered, k):
     return c
 
 
-def determine_induced_subgraph(three_path, g):
-    vertices = [three_path[0][0], three_path[1][0], three_path[1][1], three_path[2][1]]
-    edges = g.edges(vertices)
-    subgraph = nx.Graph()
-    for edge in edges:
-        if edge[0] in vertices and edge[1] in vertices:
-            subgraph.add_edge(edge[0], edge[1])
-    for i in range(len(motif_types.motifs)):
-        graph_matcher = isomorphism.GraphMatcher(subgraph, motif_types.motifs[i])
-        if graph_matcher.is_isomorphic():
-            return i + 1
-    return -1
+def determine_induced_subgraph(three_paths, g):
+    for three_path in three_paths:
+        vertices = [three_path[0][0], three_path[1][0], three_path[1][1], three_path[2][1]]
+        edges = g.edges(vertices)
+        subgraph = nx.Graph()
+        for edge in edges:
+            if edge[0] in vertices and edge[1] in vertices:
+                subgraph.add_edge(edge[0], edge[1])
+        for i in range(len(motif_types.motifs)):
+            graph_matcher = isomorphism.GraphMatcher(subgraph, motif_types.motifs[i])
+            if graph_matcher.is_isomorphic():
+                count[i + 1] += 1
+                break

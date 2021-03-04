@@ -37,15 +37,10 @@ def centered_sampler(g, g_filtered, k):
     global c
 
     big_lambda = sample_centered.big_lambda
-    centered_three_paths = []
-    for _ in range(k):
-        centered_three_paths.append(sample_centered.sample_centered(g_filtered))
+    edges = list(g.edges)
+    centered_three_paths = sample_centered.sample_centered(g_filtered, edges, k)
     print("Got centered-three-paths")
-    for centered_three_path in centered_three_paths:
-        if is_centered_three_path(centered_three_path, g):
-            index = determine_induced_subgraph(centered_three_path, g)
-            if index != -1:
-                count[index] += 1
+    determine_induced_subgraph(centered_three_paths, g)
     print("Determining induced subgraphs done")
     for i in range(3, 6):
         c[i] = (count[i] / k) * (big_lambda / b[i])
@@ -57,6 +52,25 @@ def centered_sampler(g, g_filtered, k):
     return c
 
 
+def determine_induced_subgraph(centered_three_paths, g):
+    for centered_three_path in centered_three_paths:
+        if is_centered_three_path(centered_three_path, g):
+            vertices = [centered_three_path[0][0],
+                        centered_three_path[1][0],
+                        centered_three_path[1][1],
+                        centered_three_path[2][1]]
+            edges = g.edges(vertices)
+            subgraph = nx.Graph()
+            for edge in edges:
+                if edge[0] in vertices and edge[1] in vertices:
+                    subgraph.add_edge(edge[0], edge[1])
+            for i in range(len(motif_types.motifs)):
+                graph_matcher = isomorphism.GraphMatcher(subgraph, motif_types.motifs[i])
+                if graph_matcher.is_isomorphic():
+                    count[i + 1] += 1
+                    break
+
+
 def is_centered_three_path(centered_three_path, g):
     u, v = centered_three_path[1][0], centered_three_path[1][1]
     u_, v_ = centered_three_path[0][0], centered_three_path[2][1]
@@ -64,20 +78,3 @@ def is_centered_three_path(centered_three_path, g):
             or (g.degree(u_) == g.degree(v) and g.degree(v_) == g.degree(u) and u_ > v and v_ > u):
         return True
     return False
-
-
-def determine_induced_subgraph(centered_three_path, g):
-    vertices = [centered_three_path[0][0],
-                centered_three_path[1][0],
-                centered_three_path[1][1],
-                centered_three_path[2][1]]
-    edges = g.edges(vertices)
-    subgraph = nx.Graph()
-    for edge in edges:
-        if edge[0] in vertices and edge[1] in vertices:
-            subgraph.add_edge(edge[0], edge[1])
-    for i in range(len(motif_types.motifs)):
-        graph_matcher = isomorphism.GraphMatcher(subgraph, motif_types.motifs[i])
-        if graph_matcher.is_isomorphic():
-            return i + 1
-    return -1
