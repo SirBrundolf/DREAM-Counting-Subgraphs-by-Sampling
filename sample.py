@@ -29,12 +29,12 @@ def sample(g, edges, k):
     edges = np.random.default_rng().choice(edges, k, p=tau_list)
     res = []
     for e in edges:
-        u, v = e[0][0], e[0][1]
-        neighbors_of_u_except_v = list(set(g[u]).difference({v}))
-        neighbors_of_v_except_u = list(set(g[v]).difference({u}))
+        u, v = e[0], e[1]
+        neighbors_of_u_except_v = [key for key in g[u] if key != v]
+        neighbors_of_v_except_u = [key for key in g[v] if key != u]
         u_ = neighbors_of_u_except_v[np.random.randint(len(neighbors_of_u_except_v))]
         v_ = neighbors_of_v_except_u[np.random.randint(len(neighbors_of_v_except_u))]
-        res += [(u_, u), (u, v), (v, v_)]
+        res.append([(u_, u), (u, v), (v, v_)])
     return res
 
 
