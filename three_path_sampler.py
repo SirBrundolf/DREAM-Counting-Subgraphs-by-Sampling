@@ -41,7 +41,7 @@ def three_path_sampler(g, g_filtered, k):
     global c
 
     w = sample.w
-    edges = list(g.edges)
+    edges = list(g_filtered.edges)
     three_paths = sample.sample(g_filtered, edges, k)
     print("Got three-paths")
     determine_induced_subgraph(three_paths, g)
@@ -53,10 +53,6 @@ def three_path_sampler(g, g_filtered, k):
     print("N1 calculated")
     c[0] = n1 - (c[2] + 2 * c[4] + 4 * c[5])
     print("C0 calculated")
-    #for i in range(len(motif_types.motifs)):
-    #    print((w/c[i])**2)
-    #for i in range(6):
-    #    print(count[i])
     return c
 
 

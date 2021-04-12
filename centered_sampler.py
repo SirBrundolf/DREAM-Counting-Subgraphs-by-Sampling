@@ -37,7 +37,7 @@ def centered_sampler(g, g_filtered, k):
     global c
 
     big_lambda = sample_centered.big_lambda
-    edges = list(g.edges)
+    edges = list(g_filtered.edges)
     centered_three_paths = sample_centered.sample_centered(g_filtered, edges, k)
     print("Got centered-three-paths")
     determine_induced_subgraph(centered_three_paths, g)

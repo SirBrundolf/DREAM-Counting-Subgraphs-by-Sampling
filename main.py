@@ -8,85 +8,80 @@ c_basic = [0, 0, 0, 0, 0, 0]
 c_advanced = [0, 0, 0, 0, 0, 0]
 limit = 0
 
-"""
-#g = nx.complete_graph(5)
-g = nx.Graph()
-g.add_edge(1, 2)
-g.add_edge(1, 3)
-g.add_edge(1, 4)
-g.add_edge(2, 3)
-g.add_edge(3, 4)
-g.add_edge(2, 5)
-g.add_edge(4, 5)
-g.add_edge(5, 6)
-"""
-
 g = nx.Graph()
 
-with open("Datasets/facebook_combined.txt") as test_graph:
+#Reading the dataset
+with open("Datasets/Wiki-Vote.txt") as test_graph:
     for line in test_graph:
         line = line.rstrip()
-        vertices = line.split(" ")
-        if vertices[0] != vertices[1]:
+        vertices = line.split("\t")
+        if vertices[0] != vertices[1]:  #No self-loops are allowed
             g.add_edge(vertices[0], vertices[1])
 
 start_time = time.time()
 
 
-print(len(g.nodes))
-print(len(g.edges))
+#Original Algorithm
+
 print("Read file")
+print("Node Counts:", len(g.nodes))
+print("Edge Counts:", len(g.edges))
+
 three_path_sampler.init_three_path_sampler(g)
 print("Initialized 3-path-sampler")
 first_c_basic = three_path_sampler.three_path_sampler(g, g, 2000)  #k = 200.000 on original paper
 print("3-path-sampler done")
-c_basic[0], c_basic[1], c_basic[2] = first_c_basic[0], first_c_basic[1], first_c_basic[2]
-#c_basic[0], c_basic[1], c_basic[2], c_basic[3], c_basic[4], c_basic[5] = \
-#    first_c_basic[0], first_c_basic[1], first_c_basic[2], first_c_basic[3], first_c_basic[4], first_c_basic[5]
-centered_sampler.init_centered_sampler(g)
-print("Initialized centered-sampler")
-last_c_basic = centered_sampler.centered_sampler(g, g, 2000)
-print("Centered-sampler done")
-c_basic[3], c_basic[4], c_basic[5] = last_c_basic[3], last_c_basic[4], last_c_basic[5]
+c_basic[0], c_basic[1], c_basic[2], c_basic[3], c_basic[4], c_basic[5] = \
+    first_c_basic[0], first_c_basic[1], first_c_basic[2], first_c_basic[3], first_c_basic[4], first_c_basic[5]
+    
+# Old calculation for cycle-based motifs with centered_sampler
+#c_basic[0], c_basic[1], c_basic[2] = first_c_basic[0], first_c_basic[1], first_c_basic[2]
+#centered_sampler.init_centered_sampler(g)
+#print("Initialized centered-sampler")
+#last_c_basic = centered_sampler.centered_sampler(g, g, 20000)
+#print("Centered-sampler done")
+#c_basic[3], c_basic[4], c_basic[5] = last_c_basic[3], last_c_basic[4], last_c_basic[5]
 
 print("Original Algorithm Results: ", c_basic)
 
 
 """
+#Improved Algorithm
+
+print("Read file")
+print("Node Counts:", len(g.nodes))
+print("Edge Counts:", len(g.edges))
+
 g_filtered = nx.Graph()
-g_filtered.add_nodes_from(g)
+g_filtered.add_nodes_from(g)   #Create a new graph g_filtered with all the vertices of graph g
 predictions = list(nx.adamic_adar_index(g, g.edges))
-max_prediction = 0
-min_prediction = 999
-for u, v, p in predictions:
-    if min_prediction == 999 or p < min_prediction:
-        min_prediction = p
-    if p > max_prediction:
-        max_prediction = p
-total = 0
-for u, v, p in predictions:
-    total += p
-avg = total/len(predictions)
-limit = (avg - min_prediction) / (max_prediction - min_prediction)
-print(min_prediction)
-print(max_prediction)
-print(limit)
-for u, v, p in predictions:
-    normalized_p = (p - min_prediction) / (max_prediction - min_prediction)
+pred_p = [p for u, v, p in predictions]
+max_prediction = max(pred_p)
+min_prediction = min(pred_p)
+avg = sum(pred_p)/len(pred_p)
+limit = (avg - min_prediction) / (max_prediction - min_prediction)  #Calculate the limiting score with normalization
+print("Min. Score:", min_prediction)
+print("Max. Score:", max_prediction)
+print("Limiting Score (Normalized):", limit)
+for u, v, p in predictions:  #For every edge, add only the edges with similarity score greater than average to g_filtered
+    normalized_p = (p - min_prediction) / (max_prediction - min_prediction)   #Normalize the score beween 0 and 1
     if normalized_p >= limit:
         g_filtered.add_edge(u, v)
-print(len(g.nodes))
-print(len(g.edges))
+
 three_path_sampler.init_three_path_sampler(g_filtered)
 print("Initialized 3-path-sampler")
 first_c_advanced = three_path_sampler.three_path_sampler(g, g_filtered, 2000)
 print("3-path-sampler done")
-c_advanced[0], c_advanced[1], c_advanced[2] = first_c_advanced[0], first_c_advanced[1], first_c_advanced[2]
-centered_sampler.init_centered_sampler(g_filtered)
-print("Initialized centered-sampler")
-last_c_advanced = centered_sampler.centered_sampler(g, g_filtered, 2000)
-print("Centered-sampler done")
-c_advanced[3], c_advanced[4], c_advanced[5] = last_c_advanced[3], last_c_advanced[4], last_c_advanced[5]
+c_advanced[0], c_advanced[1], c_advanced[2], c_advanced[3], c_advanced[4], c_advanced[5] = \
+    first_c_advanced[0], first_c_advanced[1], first_c_advanced[2], first_c_advanced[3], first_c_advanced[4], first_c_advanced[5]
+
+# Old calculation for cycle-based motifs with centered_sampler
+#c_advanced[0], c_advanced[1], c_advanced[2] = first_c_advanced[0], first_c_advanced[1], first_c_advanced[2]
+#centered_sampler.init_centered_sampler(g_filtered)
+#print("Initialized centered-sampler")
+#last_c_advanced = centered_sampler.centered_sampler(g, g_filtered, 2000)
+#print("Centered-sampler done")
+#c_advanced[3], c_advanced[4], c_advanced[5] = last_c_advanced[3], last_c_advanced[4], last_c_advanced[5]
 
 print("Improved Algorithm Results: ", c_advanced)
 """
