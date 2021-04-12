@@ -4,6 +4,7 @@ import centered_sampler
 import time
 
 
+#c_basic and c_advanced will be our subgraph counts, c_basic is for original algorithm, c_advanced for improved
 c_basic = [0, 0, 0, 0, 0, 0]
 c_advanced = [0, 0, 0, 0, 0, 0]
 limit = 0
@@ -11,10 +12,10 @@ limit = 0
 g = nx.Graph()
 
 #Reading the dataset
-with open("Datasets/Wiki-Vote.txt") as test_graph:
+with open("Datasets/facebook_combined.txt") as test_graph:
     for line in test_graph:
         line = line.rstrip()
-        vertices = line.split("\t")
+        vertices = line.split(" ")
         if vertices[0] != vertices[1]:  #No self-loops are allowed
             g.add_edge(vertices[0], vertices[1])
 
@@ -29,7 +30,7 @@ print("Edge Counts:", len(g.edges))
 
 three_path_sampler.init_three_path_sampler(g)
 print("Initialized 3-path-sampler")
-first_c_basic = three_path_sampler.three_path_sampler(g, g, 2000)  #k = 200.000 on original paper
+first_c_basic = three_path_sampler.three_path_sampler(g, g, 2000)  #k = 200.000 on original paper, 2000 gives us good enough results
 print("3-path-sampler done")
 c_basic[0], c_basic[1], c_basic[2], c_basic[3], c_basic[4], c_basic[5] = \
     first_c_basic[0], first_c_basic[1], first_c_basic[2], first_c_basic[3], first_c_basic[4], first_c_basic[5]

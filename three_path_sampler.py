@@ -23,9 +23,9 @@ from networkx.algorithms import isomorphism
 
 
 
-a = np.array([0, 1, 2, 4, 6, 12], dtype=np.uint64)
-c = np.array([0, 0, 0, 0, 0, 0], dtype=np.uint64)
-count = np.array([0, 0, 0, 0, 0, 0], dtype=np.uint64)
+a = np.array([0, 1, 2, 4, 6, 12], dtype=np.uint64)  #3-path counts in all other motifs
+c = np.array([0, 0, 0, 0, 0, 0], dtype=np.uint64)  #Induced subgraph counts for all motifs
+count = np.array([0, 0, 0, 0, 0, 0], dtype=np.uint64)  #Induced subgraph counts of k samples
 
 
 def init_three_path_sampler(g):
@@ -42,29 +42,30 @@ def three_path_sampler(g, g_filtered, k):
 
     w = sample.w
     edges = list(g_filtered.edges)
-    three_paths = sample.sample(g_filtered, edges, k)
+    three_paths = sample.sample(g_filtered, edges, k)   #Get k three-paths by calling sample
     print("Got three-paths")
-    determine_induced_subgraph(three_paths, g)
+    determine_induced_subgraph(three_paths, g)   #For each three-path, determine the induced subgraph
     print("Determining induced subgraphs done")
     for i in range(1, 6):
-        c[i] = (count[i] / k) * (w / a[i])
+        c[i] = (count[i] / k) * (w / a[i])   #Calculate c from counts (ci = (counti / k) * (W / A(2, i)))
     print("C1-5's calculated")
-    n1 = sum([sp.comb(g.degree(v), 3) for v in g.nodes])
+    n1 = sum([sp.comb(g.degree(v), 3) for v in g.nodes])   #Set n1 = sum(c(dv, 3) for each v ∈ V)
     print("N1 calculated")
-    c[0] = n1 - (c[2] + 2 * c[4] + 4 * c[5])
+    c[0] = n1 - (c[2] + 2 * c[4] + 4 * c[5])  #Calculate c0 from n1 − c3 − 2 * c5 − 4 * c6
     print("C0 calculated")
     return c
 
 
 def determine_induced_subgraph(three_paths, g):
     for three_path in three_paths:
-        vertices = [three_path[0][0], three_path[1][0], three_path[1][1], three_path[2][1]]
-        edges = g.edges(vertices)
+        vertices = [three_path[0][0], three_path[1][0], three_path[1][1], three_path[2][1]]  #Get unique vertices from three paths
+                                                                                      #Ex. get u, v, y, x from edges u-v, v-y, y-x
+        edges = g.edges(vertices)  #Find all the edges that contains any of those vertices
         subgraph = nx.Graph()
-        for edge in edges:
+        for edge in edges:  #For each edge, check if both of the nodes are in vertices list and if true, add them to the induced subgraph
             if edge[0] in vertices and edge[1] in vertices:
                 subgraph.add_edge(edge[0], edge[1])
-        for i in range(len(motif_types.motifs)):
+        for i in range(len(motif_types.motifs)):  #Compare our induced subgraph with each of the motifs
             graph_matcher = isomorphism.GraphMatcher(subgraph, motif_types.motifs[i])
             if graph_matcher.is_isomorphic():
                 count[i + 1] += 1

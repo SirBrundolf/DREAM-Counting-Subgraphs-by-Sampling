@@ -27,7 +27,7 @@ def init_sample_centered(g):
 
 
 def sample_centered(g, edges, k):
-    edges_picked = random.choices(edges, weights=lambda_list, k=k)
+    edges_picked = random.choices(edges, weights=lambda_list, k=k)  #Pick k edges with probability pe for edge e
     samples = []
     for e in edges_picked:
         u, v = e[0], e[1]
@@ -38,6 +38,7 @@ def sample_centered(g, edges, k):
         neighbors_of_v_bigger_than_u = [neighbor for neighbor in g[v] if degree_u < g.degree(neighbor)
                                         or (degree_u == g.degree(neighbor) and u < neighbor)]
         if len(neighbors_of_u_bigger_than_v) == 0 or len(neighbors_of_v_bigger_than_u) == 0:
+            #If any of the neighbor lists are empty, pick another sample
             edges_picked.append(random.choices(edges, weights=lambda_list, k=1)[0])
             continue
         u_ = neighbors_of_u_bigger_than_v[np.random.randint(len(neighbors_of_u_bigger_than_v))]
@@ -45,7 +46,7 @@ def sample_centered(g, edges, k):
         centered_three_path = [(u_, u), (u, v), (v, v_)]
         if centered_three_path is not None:
             samples.append(centered_three_path)
-        else:
+        else:  #If centered_three_path is empty, pick another sample
             edges_picked.append(random.choices(edges, weights=lambda_list, k=1)[0])
     return samples
 
@@ -55,9 +56,9 @@ def calculate_big_lambda(g):
     global lambda_list
 
     for edge in g.edges:
-        l_uv = sum([1 for neighbor in g[edge[0]] if neighbor > edge[1]])
+        l_uv = sum([1 for neighbor in g[edge[0]] if neighbor > edge[1]])  #L(u, v) = Neighbors of u greater than v
         l_vu = sum([1 for neighbor in g[edge[1]] if neighbor > edge[0]])
-        lambda_e = l_uv * l_vu
+        lambda_e = l_uv * l_vu  #λe = L(u, v) * L(v, u)
         lambda_list = np.append(lambda_list, lambda_e)
-        big_lambda += lambda_e
-    lambda_list = lambda_list / big_lambda
+        big_lambda += lambda_e  #Λ = sum(λe for each e)
+    lambda_list = lambda_list / big_lambda  #pe = λe / Λ for all edges

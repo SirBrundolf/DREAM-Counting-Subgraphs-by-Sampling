@@ -19,9 +19,9 @@ import motif_types
 import networkx as nx
 from networkx.algorithms import isomorphism
 
-b = np.array([0, 0, 0, 1, 1, 3], dtype=np.uint64)
-c = np.array([0, 0, 0, 0, 0, 0], dtype=np.uint64)
-count = np.array([0, 0, 0, 0, 0, 0], dtype=np.uint64)
+b = np.array([0, 0, 0, 1, 1, 3], dtype=np.uint64)  #4-cycle counts in all other motifs
+c = np.array([0, 0, 0, 0, 0, 0], dtype=np.uint64)  #Induced subgraph counts for cycle-based motifs
+count = np.array([0, 0, 0, 0, 0, 0], dtype=np.uint64)  #Induced subgraph counts of k samples (cycle-based only)
 
 
 def init_centered_sampler(g):
@@ -38,21 +38,18 @@ def centered_sampler(g, g_filtered, k):
 
     big_lambda = sample_centered.big_lambda
     edges = list(g_filtered.edges)
-    centered_three_paths = sample_centered.sample_centered(g_filtered, edges, k)
+    centered_three_paths = sample_centered.sample_centered(g_filtered, edges, k)  #Get k centered-three-paths
     print("Got centered-three-paths")
-    determine_induced_subgraph(centered_three_paths, g)
+    determine_induced_subgraph(centered_three_paths, g)  #For each centered-three-path, determine the induced subgraph
     print("Determining induced subgraphs done")
     for i in range(3, 6):
-        c[i] = (count[i] / k) * (big_lambda / b[i])
+        c[i] = (count[i] / k) * (big_lambda / b[i])  #Calculate c from counts (ci = (counti / k) · (Λ / Bi))
     print("C3-5's calculated")
-    #for i in range(len(motif_types.motifs)):
-    #    print((big_lambda/c[i])**2)
-    #for i in range(6):
-    #    print(count[i])
     return c
 
 
-def determine_induced_subgraph(centered_three_paths, g):
+def determine_induced_subgraph(centered_three_paths, g):  #Same method with three_path_sampler's determine_induced_subgraph,
+                                                    #except this also checks if the three paths are actually centered or not
     for centered_three_path in centered_three_paths:
         if is_centered_three_path(centered_three_path, g):
             vertices = [centered_three_path[0][0],
@@ -74,6 +71,7 @@ def determine_induced_subgraph(centered_three_paths, g):
 def is_centered_three_path(centered_three_path, g):
     u, v = centered_three_path[1][0], centered_three_path[1][1]
     u_, v_ = centered_three_path[0][0], centered_three_path[2][1]
+    #Check if neighbor conditions from sample_centered is satisfied (neighbor u' of u, v < u' and neighbor v' of v, u < v')
     if (g.degree(u_) > g.degree(v) and g.degree(v_) > g.degree(u)) \
             or (g.degree(u_) == g.degree(v) and g.degree(v_) == g.degree(u) and u_ > v and v_ > u):
         return True
